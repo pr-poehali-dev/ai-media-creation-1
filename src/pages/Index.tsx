@@ -1,6 +1,28 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
 
+const PAYPAL_CLIENT_ID = "f404231c62a0f";
+
+const paypalPlans: Record<string, { amount: string; currency: string; itemName: string }> = {
+  "Старт":   { amount: "10.99", currency: "USD", itemName: "NeuroCreate Старт — подписка" },
+  "Про":     { amount: "27.99", currency: "USD", itemName: "NeuroCreate Про — подписка" },
+  "Бизнес":  { amount: "77.99", currency: "USD", itemName: "NeuroCreate Бизнес — подписка" },
+};
+
+function buildPayPalUrl(planName: string) {
+  const plan = paypalPlans[planName];
+  if (!plan) return "#";
+  const params = new URLSearchParams({
+    cmd: "_xclick",
+    business: PAYPAL_CLIENT_ID,
+    item_name: plan.itemName,
+    amount: plan.amount,
+    currency_code: plan.currency,
+    no_shipping: "1",
+  });
+  return `https://www.paypal.com/cgi-bin/webscr?${params.toString()}`;
+}
+
 const tools = [
   {
     id: "photo",
@@ -85,6 +107,7 @@ const faqs = [
 
 export default function Index() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [payModal, setPayModal] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-[#070B14] text-white overflow-x-hidden">
@@ -220,8 +243,13 @@ export default function Index() {
                     </li>
                   ))}
                 </ul>
-                <button className={`w-full py-3 rounded-xl font-golos font-semibold text-sm transition-all ${plan.buttonClass}`}>
-                  {plan.popular ? "Начать бесплатно" : "Выбрать план"}
+                <button
+                  onClick={() => setPayModal(plan.name)}
+                  className={`w-full py-3 rounded-xl font-golos font-semibold text-sm transition-all flex items-center justify-center gap-2 ${plan.buttonClass}`}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.6 3h8.5c2.8 0 4.8 2.1 4.4 4.8l-.9 5.6c-.4 2.3-2.4 4-4.8 4h-1.6c-.3 0-.5.2-.6.5l-.6 3.7c-.1.3-.3.4-.6.4H8.4c-.3 0-.5-.3-.4-.6l.2-1.1M7.6 3l-1.5 9.5M7.6 3H4.3c-.3 0-.5.2-.6.5L2 17.5c-.1.3.2.5.4.5h3.3"/>
+                  </svg>
+                  {plan.popular ? "Оплатить через PayPal" : "Выбрать план"}
                 </button>
               </div>
             ))}
@@ -282,6 +310,68 @@ export default function Index() {
         </footer>
 
       </div>
+
+      {/* PayPal Modal */}
+      {payModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setPayModal(null)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-sm rounded-2xl border border-white/10 bg-[#0D1220] p-7 shadow-2xl animate-fade-up"
+            onClick={(e) => e.stopPropagation()}>
+
+            {/* PayPal logo */}
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-[#003087] flex items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.6 3h8.5c2.8 0 4.8 2.1 4.4 4.8l-.9 5.6c-.4 2.3-2.4 4-4.8 4h-1.6c-.3 0-.5.2-.6.5l-.6 3.7c-.1.3-.3.4-.6.4H8.4c-.3 0-.5-.3-.4-.6l.2-1.1M7.6 3l-1.5 9.5M7.6 3H4.3c-.3 0-.5.2-.6.5L2 17.5c-.1.3.2.5.4.5h3.3"/>
+                </svg>
+              </div>
+              <div>
+                <div className="font-unbounded text-sm font-bold text-white">PayPal</div>
+                <div className="font-golos text-xs text-white/40">Безопасная оплата</div>
+              </div>
+            </div>
+
+            <h3 className="font-unbounded text-lg font-bold text-white mb-1">
+              Тариф «{payModal}»
+            </h3>
+            <p className="font-golos text-sm text-white/50 mb-2">
+              {paypalPlans[payModal]?.itemName}
+            </p>
+
+            <div className="flex items-baseline gap-1 mb-6">
+              <span className="font-unbounded text-3xl font-black text-white">
+                ${paypalPlans[payModal]?.amount}
+              </span>
+              <span className="font-golos text-white/40 text-sm">/ месяц</span>
+            </div>
+
+            <div className="space-y-3">
+              <a
+                href={buildPayPalUrl(payModal)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 rounded-xl font-golos font-bold text-sm bg-[#0070ba] hover:bg-[#005ea6] transition-all text-white flex items-center justify-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.6 3h8.5c2.8 0 4.8 2.1 4.4 4.8l-.9 5.6c-.4 2.3-2.4 4-4.8 4h-1.6c-.3 0-.5.2-.6.5l-.6 3.7c-.1.3-.3.4-.6.4H8.4c-.3 0-.5-.3-.4-.6l.2-1.1M7.6 3l-1.5 9.5M7.6 3H4.3c-.3 0-.5.2-.6.5L2 17.5c-.1.3.2.5.4.5h3.3"/>
+                </svg>
+                Перейти к оплате в PayPal
+              </a>
+              <button
+                onClick={() => setPayModal(null)}
+                className="w-full py-3 rounded-xl font-golos text-sm text-white/40 hover:text-white/70 transition-all">
+                Отмена
+              </button>
+            </div>
+
+            <p className="mt-4 font-golos text-xs text-white/25 text-center">
+              🔒 Платёж защищён шифрованием PayPal
+            </p>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
